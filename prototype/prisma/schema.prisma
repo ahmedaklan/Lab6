@@ -12,3 +12,46 @@ model EnvironmentCheck {
   message   String
   createdAt DateTime @default(now())
 }
+
+model Group {
+  id        String    @id @default(cuid())
+  name      String
+  createdAt DateTime  @default(now())
+  members   Member[]
+  expenses  Expense[]
+}
+
+model Member {
+  id        String            @id @default(cuid())
+  name      String
+  groupId   String
+  group     Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  paid      Expense[]         @relation("Payer")
+  shares    ExpenseShare[]
+  createdAt DateTime          @default(now())
+  @@index([groupId])
+}
+
+model Expense {
+  id          String         @id @default(cuid())
+  description String
+  amountCents Int
+  groupId     String
+  payerId     String
+  group       Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  payer       Member         @relation("Payer", fields: [payerId], references: [id], onDelete: Restrict)
+  participants ExpenseShare[]
+  createdAt   DateTime       @default(now())
+  @@index([groupId, createdAt])
+}
+
+model ExpenseShare {
+  id            String  @id @default(cuid())
+  expenseId     String
+  memberId      String
+  amountCents   Int
+  expense       Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  member        Member  @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  @@unique([expenseId, memberId])
+  @@index([memberId])
+}
